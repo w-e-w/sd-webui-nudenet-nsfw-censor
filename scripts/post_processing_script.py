@@ -4,7 +4,6 @@ from modules import shared, images, scripts_postprocessing
 from PIL import Image, ImageFilter
 from math import sqrt
 import gradio as gr
-from modules.api.api import decode_base64_to_image
 
 
 filter_opt_ui_show_dict = {
@@ -75,14 +74,15 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                 def get_current_image(image):
                     # ToDo if possible make this a client side operation
                     if image:
-                        return gr.Image.update(decode_base64_to_image(image))
+                        return gr.Image.update(image)
 
                 dummy_component = gr.Label(visible=False)
                 create_canvas.click(
                     fn=get_current_image,
                     _js='getCurrentExtraSourceImg',
                     inputs=[dummy_component],
-                    outputs=[input_mask]
+                    outputs=[input_mask],
+                    postprocess=False,
                 )
 
             def update_opt_ui(_filter_type, _mask_shape, _override_settings):
