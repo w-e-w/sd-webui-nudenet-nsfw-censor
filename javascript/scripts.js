@@ -8,7 +8,6 @@ function getCurrentExtraSourceImg(dummy_component, imgCom) {
 }
 
 function nudenetCensorApplyZoomAndPanIntegration () {
-    console.log("nudenet Censor Zoom Applied");
     if (typeof window.applyZoomAndPanIntegration === "function") {
         window.applyZoomAndPanIntegration("#nudenet_nsfw_censor_extras", ["#nsfw_censor_mask"]);
         var index = uiUpdateCallbacks.indexOf(nudenetCensorApplyZoomAndPanIntegration);
@@ -19,4 +18,3 @@ function nudenetCensorApplyZoomAndPanIntegration () {
 }
 
 onUiUpdate(nudenetCensorApplyZoomAndPanIntegration);
-
