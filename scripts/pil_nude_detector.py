@@ -1,4 +1,4 @@
-from onnxruntime import InferenceSession
+from onnxruntime import InferenceSession, get_available_providers
 from PIL import Image, ImageDraw
 from cv2.dnn import NMSBoxes
 from modules import shared
@@ -62,21 +62,41 @@ mask_shapes_func_dict = {
     'Entire image': None,
 }
 
+available_onnx_providers = get_available_providers()
+if 'CPUExecutionProvider' in available_onnx_providers:
+    default_onnx_provider = 'CPUExecutionProvider'
+else:
+    default_onnx_provider = available_onnx_providers[0]
+
 
 class PilNudeDetector:
     def __init__(self):
         # NudeNet is sufficiently lightweight that running on CPU is preferable
-        self.onnx_session = InferenceSession(str(Path(__file__).parent.parent.joinpath('nudenet', 'best.onnx')))
+        self.onnx_session = None
+        self.input_name = None
+        self.input_width = None
+        self.input_height = None
+
+        self.label_config = None
+        self.thresholds = None
+        self.expand_horizontal = None
+        self.expand_vertical = None
+
+    def init_onnx(self):
+        self.onnx_session = InferenceSession(
+            str(Path(__file__).parent.parent.joinpath('nudenet', 'best.onnx')),
+            providers=[shared.opts.nudenet_nsfw_censor_onnx_provider],
+        )
         model_inputs = self.onnx_session.get_inputs()
         input_shape = model_inputs[0].shape
         self.input_name = model_inputs[0].name
         self.input_width = input_shape[2]  # 320
         self.input_height = input_shape[3]  # 320
 
-        self.label_config = None
-        self.thresholds = None
-        self.expand_horizontal = None
-        self.expand_vertical = None
+    def change_onnx_provider(self):
+        if self.onnx_session is None:
+            self.init_onnx()
+        self.onnx_session.set_providers([shared.opts.nudenet_nsfw_censor_onnx_provider])
 
     def refresh_label_configs(self):
         """
@@ -186,6 +206,8 @@ class PilNudeDetector:
                 return image_mask
 
     def get_censor_mask(self, pil_image, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical):
+        if self.onnx_session is None:
+            self.init_onnx()
         detection_results = self.onnx_session.run(None, {self.input_name: self.pre_process_pil(pil_image)})
         return self.calculate_censor_mask(detection_results, pil_image.size, thresholds, expand_horizontal, expand_vertical, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius)
 

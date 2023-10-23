@@ -1,4 +1,4 @@
-from scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict
+from scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict, available_onnx_providers, default_onnx_provider
 from scripts.censor_image_filters import filter_dict
 from modules import shared, ui_components
 import gradio as gr
@@ -22,6 +22,7 @@ censor_region_settings = {
     'nudenet_nsfw_censor_fill_color': shared.OptionInfo('#000000', 'Fill color', gr.ColorPicker, {}).info('default #000000'),
     'nudenet_nsfw_censor_nms_threshold': shared.OptionInfo(0.5, 'Non-Maximum Suppression threshold', gr.Slider, {'minimum': 0, 'maximum': 1}).info('default 0.5'),
     'nudenet_nsfw_censor_verbose_detection': shared.OptionInfo(False, 'Print detection info in terminal').info('default False'),
+    "nudenet_nsfw_censor_onnx_provider": shared.OptionInfo(default_onnx_provider, 'ONNX provider', gr.Radio, {'choices': available_onnx_providers}, onchange=pil_nude_detector.change_onnx_provider).info(f'CPU is recommended, default {default_onnx_provider}'),
     'nudenet_nsfw_censor_selected_labels': shared.OptionInfo(
         ['Anus exposed', 'Female breast exposed', 'Female genitalia exposed', 'Male genitalia exposed'],
         'Categories to be censored', ui_components.DropdownMulti, {'choices': list(nudenet_labels_index)},
