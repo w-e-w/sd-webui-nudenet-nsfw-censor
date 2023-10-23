@@ -66,7 +66,7 @@ mask_shapes_func_dict = {
 class PilNudeDetector:
     def __init__(self):
         # NudeNet is sufficiently lightweight that running on CPU is preferable
-        self.onnx_session = InferenceSession(Path(__file__).parent.parent.joinpath('nudenet', 'best.onnx'))
+        self.onnx_session = InferenceSession(str(Path(__file__).parent.parent.joinpath('nudenet', 'best.onnx')))
         model_inputs = self.onnx_session.get_inputs()
         input_shape = model_inputs[0].shape
         self.input_name = model_inputs[0].name
