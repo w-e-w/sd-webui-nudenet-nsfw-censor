@@ -84,7 +84,7 @@ class PilNudeDetector:
 
     def init_onnx(self):
         self.onnx_session = InferenceSession(
-            str(Path(__file__).parent.parent.joinpath('nudenet', 'best.onnx')),
+            str(Path(__file__).parent.parent.parent.joinpath('nudenet', 'best.onnx')),
             providers=[shared.opts.nudenet_nsfw_censor_onnx_provider],
         )
         model_inputs = self.onnx_session.get_inputs()

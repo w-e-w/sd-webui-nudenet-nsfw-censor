@@ -1,5 +1,5 @@
-from scripts.censor_image_filters import apply_filter, filter_dict
-from scripts.pil_nude_detector import pil_nude_detector
+from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter, filter_dict
+from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector
 from modules import scripts, shared, images, processing
 from PIL import ImageFilter
 from math import sqrt

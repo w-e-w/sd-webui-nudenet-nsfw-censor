@@ -1,5 +1,5 @@
-from scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict
-from scripts.censor_image_filters import apply_filter, filter_dict
+from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict
+from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter, filter_dict
 from modules.api.api import decode_base64_to_image, encode_pil_to_base64
 import modules.script_callbacks as script_callbacks
 from fastapi import FastAPI, Body

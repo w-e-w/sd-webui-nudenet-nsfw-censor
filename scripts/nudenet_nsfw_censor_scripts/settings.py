@@ -1,5 +1,5 @@
-from scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict, available_onnx_providers, default_onnx_provider
-from scripts.censor_image_filters import filter_dict
+from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict, available_onnx_providers, default_onnx_provider
+from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import filter_dict
 from modules import shared, ui_components
 import gradio as gr
 
