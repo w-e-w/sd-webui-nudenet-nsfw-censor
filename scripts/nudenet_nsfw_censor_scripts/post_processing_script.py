@@ -191,5 +191,4 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             if save_mask:
                 # ToDo save mask with info text and to same dir
                 images.save_image(censor_mask, shared.opts.outdir_samples or shared.opts.outdir_extras_samples, 'censor_mask', extension=shared.opts.samples_format)
-                if hasattr(pp, 'extra_images'):
-                    pp.extra_images.append(censor_mask)
+
