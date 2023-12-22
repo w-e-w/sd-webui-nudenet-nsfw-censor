@@ -28,9 +28,10 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
     order = 100000
 
     def ui(self):
-        with gr.Accordion('NudeNet NSFW Censor', open=False, elem_id='nudenet_nsfw_censor_extras'):
+        with gr.Accordion('NSFW Censor', open=False, elem_id='nudenet_nsfw_censor_extras'):
             with gr.Row():
-                enable = gr.Checkbox(False, label='Enable Nudenet Censor')
+                enable = gr.Checkbox(False, label='Enable')
+                enableNudeNet = gr.Checkbox(True, label='Auto-detect by Nudenet')
                 save_mask = gr.Checkbox(False, label='Save mask')
                 override_settings = gr.Checkbox(False, label='Override filter configs')
             with gr.Row():
@@ -107,6 +108,7 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
 
         controls = {
             'enable': enable,
+            'enableNudeNet': enableNudeNet,
             'override_settings': override_settings,
             'save_mask': save_mask,
             'filter_type': filter_type,
@@ -125,6 +127,8 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
         return controls
 
     def process(self, pp: scripts_postprocessing.PostprocessedImage, **args):
+        if args['enable'] == False:
+            return
         censor_mask = None
 
         if args['input_mask']:
@@ -135,7 +139,7 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                 draw_mask = args['input_mask']['mask'].convert('L').resize(pp.image.size)
                 censor_mask.paste(draw_mask, draw_mask)
 
-        if args['enable']:
+        if args['enableNudeNet']:
             if args['override_settings']:
                 nms_threshold = args['nms_threshold']
                 mask_shape = args['mask_shape']
@@ -147,7 +151,9 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
 
             if pil_nude_detector.thresholds is None:
                 pil_nude_detector.refresh_label_configs()
-            nudenet_mask = pil_nude_detector.get_censor_mask(pp.image, nms_threshold, mask_shape, rectangle_round_radius, pil_nude_detector.thresholds, pil_nude_detector.expand_horizontal, pil_nude_detector.expand_vertical).convert('L')
+            nudenet_mask = pil_nude_detector.get_censor_mask(pp.image, nms_threshold, mask_shape, rectangle_round_radius, pil_nude_detector.thresholds, pil_nude_detector.expand_horizontal, pil_nude_detector.expand_vertical)
+            if nudenet_mask is not None:
+                nudenet_mask = nudenet_mask.convert('L')
 
             if nudenet_mask and censor_mask:
                 censor_mask.paste(nudenet_mask, nudenet_mask)
@@ -185,6 +191,5 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             if save_mask:
                 # ToDo save mask with info text and to same dir
                 images.save_image(censor_mask, shared.opts.outdir_samples or shared.opts.outdir_extras_samples, 'censor_mask', extension=shared.opts.samples_format)
-                images.save_image(censor_mask, shared.opts.outdir_samples or shared.opts.outdir_extras_samples, 'censor_mask', extension=shared.opts.samples_format)
-
-# ToDo Batch support ?
+                if hasattr(pp, 'extra_images'):
+                    pp.extra_images.append(censor_mask)
