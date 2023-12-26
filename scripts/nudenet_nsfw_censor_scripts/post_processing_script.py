@@ -5,11 +5,8 @@ from PIL import Image, ImageFilter
 from math import sqrt
 import gradio as gr
 
-def extra_images_avaliable():
-    pp = scripts_postprocessing.PostprocessedImage(None)
-    return hasattr(pp, 'extra_images')
 
-if extra_images_avaliable():
+if hasattr(scripts_postprocessing.ScriptPostprocessing, 'process_firstpass'):  # webui >= 1.7
     from modules.ui_components import InputAccordion
 else:
     InputAccordion = None
