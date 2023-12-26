@@ -5,9 +5,13 @@ from PIL import Image, ImageFilter
 from math import sqrt
 import gradio as gr
 
-try:
+def extra_images_avaliable():
+    pp = scripts_postprocessing.PostprocessedImage(None)
+    return hasattr(pp, 'extra_images')
+
+if extra_images_avaliable():
     from modules.ui_components import InputAccordion
-except ImportError:
+else:
     InputAccordion = None
 
 filter_opt_ui_show_dict = {
