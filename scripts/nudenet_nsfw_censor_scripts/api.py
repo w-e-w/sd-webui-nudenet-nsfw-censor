@@ -51,7 +51,10 @@ def nudenet_censor_api(_: gr.Blocks, app: FastAPI):
             expand_horizontal = np.asarray(expand_horizontal) if expand_horizontal else pil_nude_detector.expand_horizontal
             expand_vertical = np.asarray(expand_vertical) if expand_vertical else pil_nude_detector.expand_vertical
 
-            nudenet_mask = pil_nude_detector.get_censor_mask(input_image, nms_threshold, mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical).convert('L')
+            nudenet_mask = pil_nude_detector.get_censor_mask(input_image, nms_threshold, mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical)
+            if nudenet_mask is not None:
+                nudenet_mask = nudenet_mask.convert('L')
+
             if nudenet_mask and censor_mask:
                 censor_mask.paste(nudenet_mask, nudenet_mask)
             else:
