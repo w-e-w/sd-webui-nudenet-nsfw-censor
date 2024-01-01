@@ -1,7 +1,6 @@
 from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector, nudenet_labels_index, mask_shapes_func_dict
 from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter, filter_dict
 from modules.api.api import decode_base64_to_image, encode_pil_to_base64
-import modules.script_callbacks as script_callbacks
 from fastapi import FastAPI, Body
 from PIL import ImageFilter
 from modules import shared
@@ -82,6 +81,3 @@ def nudenet_censor_api(_: gr.Blocks, app: FastAPI):
             'image': censored_image_base64,
             'mask': censor_mask_base64,
         }
-
-
-script_callbacks.on_app_started(nudenet_censor_api)
