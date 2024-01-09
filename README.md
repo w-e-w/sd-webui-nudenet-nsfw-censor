@@ -2,6 +2,10 @@
 
 This is a [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) extension that uses [NudeNet](https://github.com/notAI-tech/NudeNet) to detect NSFW regions in an image, allowing for partial censoring of the image, useful when sharing images NSFW images on social media.
 
+### Changelog
+ - 20240109: fix issue where the detected region is not scaled correctly
+ - - this fix cause old horizontal and vertical multiplier to be incorrect, as such if you are upgrading from a previous version the multiplier will be reset new default of `1.0`
+
 ### Features
 - `Image generation` and `Live preview`
 - Auto and manual censor `Extras tab` tab
@@ -139,10 +143,10 @@ payload = {
     # each element in the list correspond to one NudeNet label, the order can be found below in Default category configuration or on webui's api "/docs" page
     # confidence thresholds float [0, 1] when set to 1 disables this category
     # this example below censors [Female_breast_exposed, Female_genitalia_exposed, Anus_exposed, Male_genitalia_exposed]
-    "thresholds":           [1, 1, 1, 0.25, 0.25, 1, 0.25, 1, 1, 1, 1, 1, 1, 1, 0.25, 1, 1, 1],
+    "thresholds":           [1, 1, 1, 0.25, 0.25, 1, 0.25, 1.0, 1.0, 1, 1, 1, 1, 1, 0.25, 1.0, 1.0, 1],
     # expand horizontal / vertical, float [0, inf]
-    "expand_horizontal":    [1, 1, 1, 2.50, 2.50, 1, 2.50, 1, 1, 1, 1, 1, 1, 1, 2.00, 1, 1, 1],
-    "expand_vertical":      [1, 1, 1, 1.00, 1.50, 1, 1.75, 1, 1, 1, 1, 1, 1, 1, 1.00, 1, 1, 1],
+    "expand_horizontal":    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "expand_vertical":      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 }
 
 response = requests.post(url=f'http://localhost:7860/nudenet/censor', json=payload)
@@ -158,24 +162,24 @@ if response.status_code == 200:
 ```python
 nudenet_labels_dict = {
     # Category_name: [threshold, horizontal_multiplier, vertical_multiplier ]
-    'Female_genitalia_covered': [0.25, 2, 1],
-    'Face_female': [0.25, 1.5, 1.5],
-    'Buttocks_exposed': [0.25, 1, 1.25],
-    'Female_breast_exposed': [0.25, 2.5, 1],
-    'Female_genitalia_exposed': [0.25, 2.5, 1.5],
-    'Male_breast_exposed': [0.25, 1.5, 1.5],
-    'Anus_exposed': [0.25, 2.5, 1.75],
-    'Feet_exposed': [0.25, 1, 1],
-    'Belly_covered': [0.25, 1, 1],
-    'Feet_covered': [0.25, 1, 1],
-    'Armpits_covered': [0.25, 1, 1],
-    'Armpits_exposed': [0.25, 1, 1],
-    'Face_male': [0.25, 1.5, 1.5],
-    'Belly_exposed': [0.25, 2, 1.5],
-    'Male_genitalia_exposed': [0.25, 2, 1],
-    'Anus_covered': [0.25, 1, 1],
-    'Female_breast_covered': [0.25, 2.5, 1.5],
-    'Buttocks_covered': [0.25, 1, 1],
+    'Female_genitalia_covered': [0.25, 1.0, 1.0],
+    'Face_female': [0.25, 1.0, 1.0],
+    'Buttocks_exposed': [0.25, 1.0, 1.0],
+    'Female_breast_exposed': [0.25, 1.0, 1.0],
+    'Female_genitalia_exposed': [0.25, 1.0, 1.0],
+    'Male_breast_exposed': [0.25, 1.0, 1.0],
+    'Anus_exposed': [0.25, 1.0, 1.0],
+    'Feet_exposed': [0.25, 1.0, 1.0],
+    'Belly_covered': [0.25, 1.0, 1.0],
+    'Feet_covered': [0.25, 1.0, 1.0],
+    'Armpits_covered': [0.25, 1.0, 1.0],
+    'Armpits_exposed': [0.25, 1.0, 1.0],
+    'Face_male': [0.25, 1.0, 1.0],
+    'Belly_exposed': [0.25, 1.0, 1.0],
+    'Male_genitalia_exposed': [0.25, 1.0, 1.0],
+    'Anus_covered': [0.25, 1.0, 1.0],
+    'Female_breast_covered': [0.25, 1.0, 1.0],
+    'Buttocks_covered': [0.25, 1.0, 1.0],
 }
 
 ```
