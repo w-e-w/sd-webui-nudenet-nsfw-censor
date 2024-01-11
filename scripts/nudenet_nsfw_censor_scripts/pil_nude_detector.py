@@ -7,24 +7,24 @@ from math import sqrt
 import numpy as np
 
 nudenet_labels_dict = {
-    'Female_genitalia_covered': [0.25, 2, 1],
-    'Face_female': [0.25, 1.5, 1.5],
-    'Buttocks_exposed': [0.25, 1, 1.25],
-    'Female_breast_exposed': [0.25, 2.5, 1],
-    'Female_genitalia_exposed': [0.25, 2.5, 1.5],
-    'Male_breast_exposed': [0.25, 1.5, 1.5],
-    'Anus_exposed': [0.25, 2.5, 1.75],
-    'Feet_exposed': [0.25, 1, 1],
-    'Belly_covered': [0.25, 1, 1],
-    'Feet_covered': [0.25, 1, 1],
-    'Armpits_covered': [0.25, 1, 1],
-    'Armpits_exposed': [0.25, 1, 1],
-    'Face_male': [0.25, 1.5, 1.5],
-    'Belly_exposed': [0.25, 2, 1.5],
-    'Male_genitalia_exposed': [0.25, 2, 1],
-    'Anus_covered': [0.25, 1, 1],
-    'Female_breast_covered': [0.25, 2.5, 1.5],
-    'Buttocks_covered': [0.25, 1, 1],
+    'Female_genitalia_covered': [0.25, 1.0, 1.0],
+    'Face_female': [0.25, 1.0, 1.0],
+    'Buttocks_exposed': [0.25, 1.0, 1.0],
+    'Female_breast_exposed': [0.25, 1.0, 1.0],
+    'Female_genitalia_exposed': [0.25, 1.0, 1.0],
+    'Male_breast_exposed': [0.25, 1.0, 1.0],
+    'Anus_exposed': [0.25, 1.0, 1.0],
+    'Feet_exposed': [0.25, 1.0, 1.0],
+    'Belly_covered': [0.25, 1.0, 1.0],
+    'Feet_covered': [0.25, 1.0, 1.0],
+    'Armpits_covered': [0.25, 1.0, 1.0],
+    'Armpits_exposed': [0.25, 1.0, 1.0],
+    'Face_male': [0.25, 1.0, 1.0],
+    'Belly_exposed': [0.25, 1.0, 1.0],
+    'Male_genitalia_exposed': [0.25, 1.0, 1.0],
+    'Anus_covered': [0.25, 1.0, 1.0],
+    'Female_breast_covered': [0.25, 1.0, 1.0],
+    'Buttocks_covered': [0.25, 1.0, 1.0],
 }
 
 nudenet_labels_index = {key.replace('_', ' '): (index, key, value) for index, (key, value) in enumerate(nudenet_labels_dict.items())}
@@ -164,7 +164,6 @@ class PilNudeDetector:
                 verbose = ''
 
                 max_score_indices = np.argmax(outputs[:, 4:], axis=1)
-                x_factor, y_factor = img_size[0] / self.input_width, img_size[1] / self.input_height
                 detection_results = outputs[filter_results]
 
                 boxes = detection_results[:, :4]
@@ -182,7 +181,15 @@ class PilNudeDetector:
                     class_index = class_index[nms]
 
                 # scale to original image width
-                boxes *= [x_factor, y_factor, x_factor, y_factor]
+                offset = abs(img_size[0] - img_size[1]) / 2
+                if img_size[0] > img_size[1]:
+                    factor = img_size[0] / self.input_width
+                    boxes *= factor
+                    boxes[:, 1] -= offset
+                else:
+                    factor = img_size[1] / self.input_height
+                    boxes *= factor
+                    boxes[:, 0] -= offset
 
                 wh_e = boxes[:, 2:4] * np.vstack((expand_horizontal[class_index], expand_vertical[class_index])).T
                 boxes[:, 0:2] -= (wh_e - boxes[:, 2:4])/2
