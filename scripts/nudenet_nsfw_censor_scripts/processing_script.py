@@ -54,7 +54,7 @@ class ScriptNudenetCensor(scripts.Script):
     def show(self, is_img2img):
         return scripts.AlwaysVisible
 
-    def postprocess_image(self, p, pp, *args):
+    def postprocess_image_after_composite(self, p, pp, *args):
         """
         Detect image with nudenet and apply censor filter selected areas of the pp.image
         pp.image will be replaced with censor image if filter is applied
@@ -97,6 +97,9 @@ class ScriptNudenetCensor(scripts.Script):
 
             if shared.opts.nudenet_nsfw_censor_gen_filter_type:
                 pp.image = apply_filter(pp.image, censor_mask, shared.opts.nudenet_nsfw_censor_gen_filter_type, **filter_settings)
+
+    if not hasattr(scripts.Script, 'postprocess_image_after_composite'):
+        postprocess_image = postprocess_image_after_composite
 
     def setup(self, p, *args):
         """
