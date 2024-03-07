@@ -39,6 +39,9 @@ def draw_ellipse(draw, left_expanded, top_expanded, right_expanded, down_expande
 def draw_rectangle(draw, left_expanded, top_expanded, right_expanded, down_expanded, *args, **kwargs):
     draw.rectangle((left_expanded, top_expanded, right_expanded, down_expanded), 1)
 
+def draw_rectangle_border(draw, left_expanded, top_expanded, right_expanded, down_expanded, width_expanded=None, height_expanded=None, rectangle_round_radius=None, rectangle_border_width=3, *args, **kwargs):
+    draw.rectangle((left_expanded, top_expanded, right_expanded, down_expanded), fill=0)
+    draw.rectangle((left_expanded, top_expanded, right_expanded, down_expanded), outline=1, width=rectangle_border_width)
 
 def rounded_rectangle(draw, left_expanded, top_expanded, right_expanded, down_expanded, width_expanded, height_expanded, rectangle_round_radius, *args, **kwargs):
     if rectangle_round_radius > 1:
@@ -58,6 +61,7 @@ def rounded_rectangle(draw, left_expanded, top_expanded, right_expanded, down_ex
 mask_shapes_func_dict = {
     'Ellipse': draw_ellipse,
     'Rectangle': draw_rectangle,
+    'Rectangle border': draw_rectangle_border,
     'Rounded rectangle': rounded_rectangle,
     'Entire image': None,
 }
@@ -130,7 +134,7 @@ class PilNudeDetector:
         # convert to desired format
         return np.expand_dims(np.array(pad_image, dtype=np.float32).transpose(2, 0, 1) / 255.0, axis=0)
 
-    def calculate_censor_mask(self, detection_results, img_size, thresholds, expand_horizontal, expand_vertical, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius):
+    def calculate_censor_mask(self, detection_results, img_size, thresholds, expand_horizontal, expand_vertical, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius, rectangle_border_width):
         """
         Generate binary mask from detection results of nudenet filtered and adjusted based on label_configs
         Args:
@@ -200,7 +204,7 @@ class PilNudeDetector:
                 for i in range(scores.shape[0]):
                     x1y1x2y2 = boxes[i]
                     wh = wh_e[i]
-                    draw_func(draw, *x1y1x2y2, *wh, rectangle_round_radius)
+                    draw_func(draw, *x1y1x2y2, *wh, rectangle_round_radius, rectangle_border_width)
 
                     if shared.opts.nudenet_nsfw_censor_verbose_detection:
                         verbose += (
@@ -212,11 +216,11 @@ class PilNudeDetector:
 
                 return image_mask
 
-    def get_censor_mask(self, pil_image, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical):
+    def get_censor_mask(self, pil_image, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical, rectangle_border_width):
         if self.onnx_session is None:
             self.init_onnx()
         detection_results = self.onnx_session.run(None, {self.input_name: self.pre_process_pil(pil_image)})
-        return self.calculate_censor_mask(detection_results, pil_image.size, thresholds, expand_horizontal, expand_vertical, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius)
+        return self.calculate_censor_mask(detection_results, pil_image.size, thresholds, expand_horizontal, expand_vertical, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius, rectangle_border_width)
 
 
 pil_nude_detector = PilNudeDetector()
