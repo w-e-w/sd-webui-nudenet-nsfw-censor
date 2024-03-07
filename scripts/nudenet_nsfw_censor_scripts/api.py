@@ -28,6 +28,7 @@ def nudenet_censor_api(_: gr.Blocks, app: FastAPI):
             thresholds: list = Body(None, title=f"list of float for thresholds of: {list(nudenet_labels_index)}"),
             expand_horizontal: list = Body(None, title=f"List of float for expand horizontal: {list(nudenet_labels_index)}"),
             expand_vertical: list = Body(None, title=f"List of float for expand vertical: {list(nudenet_labels_index)}"),
+            rectangle_border_width: int = Body(3, title="Rectangle border width: float [0, inf]"),
     ):
         input_image = decode_base64_to_image(input_image)
         if not input_image:
@@ -50,7 +51,7 @@ def nudenet_censor_api(_: gr.Blocks, app: FastAPI):
             expand_horizontal = np.asarray(expand_horizontal) if expand_horizontal else pil_nude_detector.expand_horizontal
             expand_vertical = np.asarray(expand_vertical) if expand_vertical else pil_nude_detector.expand_vertical
 
-            nudenet_mask = pil_nude_detector.get_censor_mask(input_image, nms_threshold, mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical)
+            nudenet_mask = pil_nude_detector.get_censor_mask(input_image, nms_threshold, mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical, rectangle_border_width)
             if nudenet_mask is not None:
                 nudenet_mask = nudenet_mask.convert('L')
 
