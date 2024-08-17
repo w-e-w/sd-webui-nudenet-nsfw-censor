@@ -118,6 +118,8 @@ class PilNudeDetector:
         Returns: numpy.float32 array
         """
         # resize
+        if pil_image.mode != 'RGB':
+            pil_image = pil_image.convert('RGB')
         width, height = pil_image.size
         new_size = (self.input_width, round(self.input_height * height / width)) if width > height else (round(self.input_width * width / height), self.input_height)
         resized_image = pil_image.resize(new_size)
