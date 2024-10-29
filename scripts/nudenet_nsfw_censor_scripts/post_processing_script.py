@@ -167,7 +167,7 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
 
             if nudenet_mask and censor_mask:
                 censor_mask.paste(nudenet_mask, nudenet_mask)
-            else:
+            elif not censor_mask:
                 censor_mask = nudenet_mask
 
         if censor_mask:
