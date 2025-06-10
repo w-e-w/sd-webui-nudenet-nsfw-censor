@@ -12,9 +12,19 @@ if hasattr(scripts_postprocessing.ScriptPostprocessing, 'process_firstpass'):  #
 else:
     InputAccordion = None
 
-# ToDo: properly implement forge compatibility, currently forge compatibility is done by disabling custom mask related features
 if find_spec('modules_forge'):
     forge = True
+    from modules_forge.forge_canvas.canvas import ForgeCanvas
+    from modules.script_callbacks import on_after_component
+    extra_src_image = None
+
+    def get_extra_img_elem(component, **_kwargs):
+        global extra_src_image
+        if getattr(component, "elem_id", None) == "extras_image":
+            extra_src_image = component
+
+    on_after_component(get_extra_img_elem)
+
 else:
     forge = False
 
@@ -64,12 +74,38 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                 mask_blend_radius_variable_blur = gr.Slider(0, 100, 10, label='Variable blur mask blend radius', visible=False)  # Variable blur
                 nms_threshold = gr.Slider(0, 1, 1, label='NMS threshold', visible=False)  # NMS threshold
                 rectangle_round_radius = gr.Number(value=0.5, label='Rectangle round radius', visible=False)  # Rounded rectangle
-            if not forge:
-                with gr.Row():
-                    create_canvas = gr.Button('Create canvas')
+            with gr.Row():
+                create_canvas = gr.Button('Create canvas')
+                if forge:
+                    with gr.Column():
+                        draw_mask = gr.Checkbox(True, label='Draw mask', elem_id="nsfw_censor_forge_draw mask",)
+                        upload_mask = gr.Checkbox(False, label='Upload mask', elem_id="nsfw_censor_forge_upload_mask")
+                else:
                     mask_source = gr.CheckboxGroup(['Draw mask', 'Upload mask'], value=['Draw mask'], label="Canvas mask source")
                     mask_brush_color = gr.ColorPicker('#000000', label='Brush color', info='visual only, use when brush color is hard to see')
-                with gr.Row():
+            with gr.Row():
+                if forge:
+                    forge_canvas = ForgeCanvas(
+                        elem_id="nsfw_censor_mask",
+                        height=512,
+                        contrast_scribbles=shared.opts.img2img_inpaint_mask_high_contrast,
+                        scribble_color=shared.opts.img2img_inpaint_mask_brush_color,
+                        scribble_color_fixed=True,
+                        scribble_alpha=shared.opts.img2img_inpaint_mask_scribble_alpha,
+                        scribble_alpha_fixed=True,
+                        scribble_softness_fixed=True,
+                    )
+
+                    def get_current_image(image):
+                        return image, None
+
+                    create_canvas.click(
+                        fn=get_current_image,
+                        inputs=[extra_src_image],
+                        outputs=[forge_canvas.background, forge_canvas.foreground],
+                    )
+
+                else:
                     input_mask = gr.Image(
                         label="Censor mask",
                         show_label=False,
@@ -141,7 +177,15 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             'rectangle_round_radius': rectangle_round_radius,
             'nms_threshold': nms_threshold,
         }
-        if not forge:
+        if forge:
+            controls.update({
+                'draw_mask': draw_mask,
+                'upload_mask': upload_mask,
+                # 'input_mask': input_mask,
+                'forge_canvas_bg': forge_canvas.background,
+                'forge_canvas_fg': forge_canvas.foreground,
+            })
+        else:
             controls.update({
                 'input_mask': input_mask,
                 'mask_source': mask_source,
@@ -153,15 +197,26 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             return
         censor_mask = None
 
-        input_mask = args.get('input_mask')
-        if input_mask:
-            mask_source = args.get('mask_source')
-            if 'Upload mask' in mask_source:
-                censor_mask = input_mask['image'].convert('L').resize(pp.image.size)
-            if 'Draw mask' in mask_source:
+        if forge:
+            forge_canvas_bg = args.get('forge_canvas_bg')
+            forge_canvas_fg = args.get('forge_canvas_fg')
+            if args.get('upload_mask') and forge_canvas_bg:
+                censor_mask = forge_canvas_bg.convert('L').resize(pp.image.size)
+            if args.get('draw_mask') and forge_canvas_fg:
                 censor_mask = Image.new('L', pp.image.size, 0) if censor_mask is None else censor_mask
-                draw_mask = input_mask['mask'].convert('L').resize(pp.image.size)
+                r, g, b, a = forge_canvas_fg.split()
+                draw_mask = a.convert('L').resize(pp.image.size)
                 censor_mask.paste(draw_mask, draw_mask)
+        else:
+            input_mask = args.get('input_mask')
+            if input_mask:
+                mask_source = args.get('mask_source')
+                if 'Upload mask' in mask_source:
+                    censor_mask = input_mask['image'].convert('L').resize(pp.image.size)
+                if 'Draw mask' in mask_source:
+                    censor_mask = Image.new('L', pp.image.size, 0) if censor_mask is None else censor_mask
+                    draw_mask = input_mask['mask'].convert('L').resize(pp.image.size)
+                    censor_mask.paste(draw_mask, draw_mask)
 
         if args['enable_nudenet']:
             if args['override_settings']:
