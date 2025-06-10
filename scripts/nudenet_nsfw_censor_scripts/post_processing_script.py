@@ -129,8 +129,7 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
 
                     def get_current_image(image):
                         # ToDo if possible make this a client side operation
-                        if image:
-                            return gr.Image.update(image)
+                        return gr.Image.update(image) if image else None
 
                     dummy_component = gr.Label(visible=False)
                     create_canvas.click(
@@ -181,7 +180,6 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             controls.update({
                 'draw_mask': draw_mask,
                 'upload_mask': upload_mask,
-                # 'input_mask': input_mask,
                 'forge_canvas_bg': forge_canvas.background,
                 'forge_canvas_fg': forge_canvas.foreground,
             })
