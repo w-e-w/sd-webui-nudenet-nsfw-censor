@@ -5,6 +5,8 @@ This is a [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diff
 ### Changelog
  - 20240109: fix issue where the detected region is not scaled correctly
  - - this fix cause old horizontal and vertical multiplier to be incorrect, as such if you are upgrading from a previous version the multiplier will be reset new default of `1.0`
+ - 20240829: fix extra tab custom mask being ignored when auto detect is used but detects nothing
+ - 20250611: fix compatibility issue with [forge](https://github.com/lllyasviel/stable-diffusion-webui-forge)
 
 ### Features
 - `Image generation` and `Live preview`
