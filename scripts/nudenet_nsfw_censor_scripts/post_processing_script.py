@@ -19,16 +19,16 @@ extra_src_image = None
 try:
     if find_spec('modules_forge'):
         forge = True
-    from modules_forge.forge_canvas.canvas import ForgeCanvas
-    from modules.script_callbacks import on_after_component
+        from modules_forge.forge_canvas.canvas import ForgeCanvas
+        from modules.script_callbacks import on_after_component
 
-    def get_extra_img_elem(component, **_kwargs):
-        global extra_src_image
-        if getattr(component, "elem_id", None) == "extras_image":
-            extra_src_image = component
+        def get_extra_img_elem(component, **_kwargs):
+            global extra_src_image
+            if getattr(component, "elem_id", None) == "extras_image":
+                extra_src_image = component
 
-    on_after_component(get_extra_img_elem)
-    forge_no_error = True
+        on_after_component(get_extra_img_elem)
+        forge_no_error = True
 except Exception as e:
     errors.report(
         '''Error loading sd-webui-nudenet-nsfw-censor extras tab on Forge
