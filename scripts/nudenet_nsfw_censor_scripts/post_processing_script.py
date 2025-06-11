@@ -1,6 +1,6 @@
 from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector, mask_shapes_func_dict
 from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter, filter_dict
-from modules import shared, images, scripts_postprocessing
+from modules import shared, images, scripts_postprocessing, errors
 from importlib.util import find_spec
 from PIL import Image, ImageFilter
 from math import sqrt
@@ -12,11 +12,15 @@ if hasattr(scripts_postprocessing.ScriptPostprocessing, 'process_firstpass'):  #
 else:
     InputAccordion = None
 
-if find_spec('modules_forge'):
-    forge = True
+forge = False
+forge_no_error = False
+extra_src_image = None
+
+try:
+    if find_spec('modules_forge'):
+        forge = True
     from modules_forge.forge_canvas.canvas import ForgeCanvas
     from modules.script_callbacks import on_after_component
-    extra_src_image = None
 
     def get_extra_img_elem(component, **_kwargs):
         global extra_src_image
@@ -24,9 +28,16 @@ if find_spec('modules_forge'):
             extra_src_image = component
 
     on_after_component(get_extra_img_elem)
-
-else:
-    forge = False
+    forge_no_error = True
+except Exception as e:
+    errors.report(
+        '''Error loading sd-webui-nudenet-nsfw-censor extras tab on Forge
+    The extension should still work on extras tab but without manual masking functionality
+    Please try updating this extension and Forge
+    If it still dose not work then reporting this issue to
+    https://github.com/w-e-w/sd-webui-nudenet-nsfw-censor''',
+        exc_info=True,
+    )
 
 
 filter_opt_ui_show_dict = {
@@ -74,71 +85,76 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                 mask_blend_radius_variable_blur = gr.Slider(0, 100, 10, label='Variable blur mask blend radius', visible=False)  # Variable blur
                 nms_threshold = gr.Slider(0, 1, 1, label='NMS threshold', visible=False)  # NMS threshold
                 rectangle_round_radius = gr.Number(value=0.5, label='Rectangle round radius', visible=False)  # Rounded rectangle
-            with gr.Row():
-                create_canvas = gr.Button('Create canvas')
-                if forge:
-                    with gr.Column():
-                        draw_mask = gr.Checkbox(True, label='Draw mask', elem_id="nsfw_censor_forge_draw mask",)
-                        upload_mask = gr.Checkbox(False, label='Upload mask', elem_id="nsfw_censor_forge_upload_mask")
-                else:
-                    mask_source = gr.CheckboxGroup(['Draw mask', 'Upload mask'], value=['Draw mask'], label="Canvas mask source")
-                    mask_brush_color = gr.ColorPicker('#000000', label='Brush color', info='visual only, use when brush color is hard to see')
-            with gr.Row():
-                if forge:
-                    forge_canvas = ForgeCanvas(
-                        elem_id="nsfw_censor_mask",
-                        height=512,
-                        contrast_scribbles=shared.opts.img2img_inpaint_mask_high_contrast,
-                        scribble_color=shared.opts.img2img_inpaint_mask_brush_color,
-                        scribble_color_fixed=True,
-                        scribble_alpha=shared.opts.img2img_inpaint_mask_scribble_alpha,
-                        scribble_alpha_fixed=True,
-                        scribble_softness_fixed=True,
-                    )
 
-                    def get_current_image(image):
-                        return image, None
+            if not forge or forge_no_error:
+                with gr.Row():
+                    if not forge or extra_src_image:
+                        create_canvas = gr.Button('Create canvas')
+                    if forge:
+                        with gr.Column():
+                            draw_mask = gr.Checkbox(True, label='Draw mask', elem_id="nsfw_censor_forge_draw mask", )
+                            upload_mask = gr.Checkbox(False, label='Upload mask', elem_id="nsfw_censor_forge_upload_mask")
+                    else:
+                        mask_source = gr.CheckboxGroup(['Draw mask', 'Upload mask'], value=['Draw mask'], label="Canvas mask source")
+                        mask_brush_color = gr.ColorPicker('#000000', label='Brush color', info='visual only, use when brush color is hard to see')
+                with gr.Row():
+                    if forge:
+                        if forge_no_error:
+                            forge_canvas = ForgeCanvas(
+                                elem_id="nsfw_censor_mask",
+                                height=512,
+                                contrast_scribbles=shared.opts.img2img_inpaint_mask_high_contrast,
+                                scribble_color=shared.opts.img2img_inpaint_mask_brush_color,
+                                scribble_color_fixed=True,
+                                scribble_alpha=shared.opts.img2img_inpaint_mask_scribble_alpha,
+                                scribble_alpha_fixed=True,
+                                scribble_softness_fixed=True,
+                            )
 
-                    create_canvas.click(
-                        fn=get_current_image,
-                        inputs=[extra_src_image],
-                        outputs=[forge_canvas.background, forge_canvas.foreground],
-                    )
+                            if extra_src_image:
+                                def get_current_image(image):
+                                    return image, None
 
-                else:
-                    input_mask = gr.Image(
-                        label="Censor mask",
-                        show_label=False,
-                        elem_id="nsfw_censor_mask",
-                        source="upload",
-                        interactive=True,
-                        type="pil",
-                        tool="sketch",
-                        image_mode="RGBA",
-                        brush_color='#000000'
-                    )
+                                create_canvas.click(
+                                    fn=get_current_image,
+                                    inputs=[extra_src_image],
+                                    outputs=[forge_canvas.background, forge_canvas.foreground],
+                                )
 
-                    def update_mask_brush_color(color):
-                        return gr.Image.update(brush_color=color)
+                    else:
+                        input_mask = gr.Image(
+                            label="Censor mask",
+                            show_label=False,
+                            elem_id="nsfw_censor_mask",
+                            source="upload",
+                            interactive=True,
+                            type="pil",
+                            tool="sketch",
+                            image_mode="RGBA",
+                            brush_color='#000000'
+                        )
 
-                    mask_brush_color.change(
-                        fn=update_mask_brush_color,
-                        inputs=[mask_brush_color],
-                        outputs=[input_mask]
-                    )
+                        def update_mask_brush_color(color):
+                            return gr.Image.update(brush_color=color)
 
-                    def get_current_image(image):
-                        # ToDo if possible make this a client side operation
-                        return gr.Image.update(image) if image else None
+                        mask_brush_color.change(
+                            fn=update_mask_brush_color,
+                            inputs=[mask_brush_color],
+                            outputs=[input_mask]
+                        )
 
-                    dummy_component = gr.Label(visible=False)
-                    create_canvas.click(
-                        fn=get_current_image,
-                        _js='getCurrentExtraSourceImg',
-                        inputs=[dummy_component],
-                        outputs=[input_mask],
-                        postprocess=False,
-                    )
+                        def get_current_image(image):
+                            # ToDo if possible make this a client side operation
+                            return gr.Image.update(image) if image else None
+
+                        dummy_component = gr.Label(visible=False)
+                        create_canvas.click(
+                            fn=get_current_image,
+                            _js='getCurrentExtraSourceImg',
+                            inputs=[dummy_component],
+                            outputs=[input_mask],
+                            postprocess=False,
+                        )
 
             def update_opt_ui(_filter_type, _mask_shape, _override_settings, _enable_nudenet):
                 filter_opt_enable_list = filter_opt_ui_show_dict[_filter_type]
@@ -177,12 +193,13 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             'nms_threshold': nms_threshold,
         }
         if forge:
-            controls.update({
-                'draw_mask': draw_mask,
-                'upload_mask': upload_mask,
-                'forge_canvas_bg': forge_canvas.background,
-                'forge_canvas_fg': forge_canvas.foreground,
-            })
+            if forge_no_error:
+                controls.update({
+                    'draw_mask': draw_mask,
+                    'upload_mask': upload_mask,
+                    'forge_canvas_bg': forge_canvas.background,
+                    'forge_canvas_fg': forge_canvas.foreground,
+                })
         else:
             controls.update({
                 'input_mask': input_mask,
