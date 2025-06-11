@@ -214,6 +214,8 @@ class PilNudeDetector:
 
                 return image_mask
 
+        return None
+
     def get_censor_mask(self, pil_image, nms_threshold, nudenet_nsfw_censor_mask_shape, rectangle_round_radius, thresholds, expand_horizontal, expand_vertical):
         if self.onnx_session is None:
             self.init_onnx()
