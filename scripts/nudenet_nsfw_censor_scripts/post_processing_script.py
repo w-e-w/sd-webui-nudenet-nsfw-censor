@@ -67,114 +67,136 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             else gr.Accordion('NSFW Censor', open=False, elem_id='nudenet_nsfw_censor_extras')
             as enable
         ):
-            with gr.Row():
-                if not InputAccordion:
-                    enable = gr.Checkbox(False, label='Enable', elem_id='nudenet_nsfw_censor_extras-visible-checkbox')
-                enable_nudenet = gr.Checkbox(True, label='NudeNet Auto-detect')
-                save_mask = gr.Checkbox(False, label='Save mask')
-                override_settings = gr.Checkbox(False, label='Override filter configs')
-            with gr.Row():
-                filter_type = gr.Dropdown(value='Variable blur', label='Censor filter', choices=list(filter_dict), visible=False)
-                mask_shape = gr.Dropdown(value='Ellipse', choices=list(mask_shapes_func_dict), label='Mask shape', visible=False)
-            with gr.Row():
-                blur_radius = gr.Slider(0, 100, 10, label='Blur radius', visible=False)  # Variable blur Gaussian Blur
-                blur_strength_curve = gr.Slider(0, 6, 3, label='Blur strength curve', visible=False)  # Variable blur
-                pixelation_factor = gr.Slider(1, 10, 5, label='Pixelation factor', visible=False)  # Pixelate
-                fill_color = gr.ColorPicker(value='#000000', label='fill color', visible=False)  # Fill color
-                mask_blend_radius = gr.Slider(0, 100, 0, label='Mask blend radius', visible=False)  # except Variable blur
-                mask_blend_radius_variable_blur = gr.Slider(0, 100, 10, label='Variable blur mask blend radius', visible=False)  # Variable blur
-                nms_threshold = gr.Slider(0, 1, 1, label='NMS threshold', visible=False)  # NMS threshold
-                rectangle_round_radius = gr.Number(value=0.5, label='Rectangle round radius', visible=False)  # Rounded rectangle
+            with gr.Blocks(analytics_enabled=False) as block:
+                with gr.Row() as row_0:
+                    if not InputAccordion:
+                        enable = gr.Checkbox(False, label='Enable', elem_id='nudenet_nsfw_censor_extras-visible-checkbox')
+                    enable_nudenet = gr.Checkbox(True, label='NudeNet Auto-detect')
+                    save_mask = gr.Checkbox(False, label='Save mask')
+                    override_settings = gr.Checkbox(False, label='Override filter configs')
+                with gr.Row() as row_1:
+                    filter_type = gr.Dropdown(value='Variable blur', label='Censor filter', choices=list(filter_dict), visible=False)
+                    mask_shape = gr.Dropdown(value='Ellipse', choices=list(mask_shapes_func_dict), label='Mask shape', visible=False)
+                with gr.Row() as row_2:
+                    blur_radius = gr.Slider(0, 100, 10, label='Blur radius', visible=False)  # Variable blur Gaussian Blur
+                    blur_strength_curve = gr.Slider(0, 6, 3, label='Blur strength curve', visible=False)  # Variable blur
+                    pixelation_factor = gr.Slider(1, 10, 5, label='Pixelation factor', visible=False)  # Pixelate
+                    fill_color = gr.ColorPicker(value='#000000', label='fill color', visible=False)  # Fill color
+                    mask_blend_radius = gr.Slider(0, 100, 0, label='Mask blend radius', visible=False)  # except Variable blur
+                    mask_blend_radius_variable_blur = gr.Slider(0, 100, 10, label='Variable blur mask blend radius', visible=False)  # Variable blur
+                    nms_threshold = gr.Slider(0, 1, 1, label='NMS threshold', visible=False)  # NMS threshold
+                    rectangle_round_radius = gr.Number(value=0.5, label='Rectangle round radius', visible=False)  # Rounded rectangle
 
-            if not forge or forge_no_error:
-                with gr.Row():
-                    if not forge or extra_src_image:
-                        create_canvas = gr.Button('Create canvas')
-                    if forge:
-                        with gr.Column():
-                            draw_mask = gr.Checkbox(True, label='Draw mask', elem_id="nsfw_censor_forge_draw mask", )
-                            upload_mask = gr.Checkbox(False, label='Upload mask', elem_id="nsfw_censor_forge_upload_mask")
-                    else:
-                        mask_source = gr.CheckboxGroup(['Draw mask', 'Upload mask'], value=['Draw mask'], label="Canvas mask source")
-                        mask_brush_color = gr.ColorPicker('#000000', label='Brush color', info='visual only, use when brush color is hard to see')
-                with gr.Row():
-                    if forge:
-                        if forge_no_error:
-                            forge_canvas = ForgeCanvas(
-                                elem_id="nsfw_censor_mask",
-                                height=512,
-                                contrast_scribbles=shared.opts.img2img_inpaint_mask_high_contrast,
-                                scribble_color=shared.opts.img2img_inpaint_mask_brush_color,
-                                scribble_color_fixed=True,
-                                scribble_alpha=shared.opts.img2img_inpaint_mask_scribble_alpha,
-                                scribble_alpha_fixed=True,
-                                scribble_softness_fixed=True,
-                            )
-
-                            if extra_src_image:
-                                def get_current_image(image):
-                                    return image, None
-
-                                create_canvas.click(
-                                    fn=get_current_image,
-                                    inputs=[extra_src_image],
-                                    outputs=[forge_canvas.background, forge_canvas.foreground],
+                if not forge or forge_no_error:
+                    with gr.Row():
+                        if not forge or extra_src_image:
+                            create_canvas = gr.Button('Create canvas')
+                        if forge:
+                            with gr.Column():
+                                draw_mask = gr.Checkbox(True, label='Draw mask', elem_id="nsfw_censor_forge_draw mask", )
+                                upload_mask = gr.Checkbox(False, label='Upload mask', elem_id="nsfw_censor_forge_upload_mask")
+                        else:
+                            mask_source = gr.CheckboxGroup(['Draw mask', 'Upload mask'], value=['Draw mask'], label="Canvas mask source")
+                            mask_brush_color = gr.ColorPicker('#000000', label='Brush color', info='visual only, use when brush color is hard to see')
+                    with gr.Row():
+                        if forge:
+                            if forge_no_error:
+                                forge_canvas = ForgeCanvas(
+                                    elem_id="nsfw_censor_mask",
+                                    height=512,
+                                    contrast_scribbles=shared.opts.img2img_inpaint_mask_high_contrast,
+                                    scribble_color=shared.opts.img2img_inpaint_mask_brush_color,
+                                    scribble_color_fixed=True,
+                                    scribble_alpha=shared.opts.img2img_inpaint_mask_scribble_alpha,
+                                    scribble_alpha_fixed=True,
+                                    scribble_softness_fixed=True,
                                 )
 
-                    else:
-                        input_mask = gr.Image(
-                            label="Censor mask",
-                            show_label=False,
-                            elem_id="nsfw_censor_mask",
-                            source="upload",
-                            interactive=True,
-                            type="pil",
-                            tool="sketch",
-                            image_mode="RGBA",
-                            brush_color='#000000'
-                        )
+                                if extra_src_image:
+                                    def get_current_image(image):
+                                        return image, None
 
-                        def update_mask_brush_color(color):
-                            return gr.Image.update(brush_color=color)
+                                    create_canvas.click(
+                                        fn=get_current_image,
+                                        inputs=[extra_src_image],
+                                        outputs=[forge_canvas.background, forge_canvas.foreground],
+                                    )
 
-                        mask_brush_color.change(
-                            fn=update_mask_brush_color,
-                            inputs=[mask_brush_color],
-                            outputs=[input_mask]
-                        )
+                        else:
+                            input_mask = gr.Image(
+                                label="Censor mask",
+                                show_label=False,
+                                elem_id="nsfw_censor_mask",
+                                source="upload",
+                                interactive=True,
+                                type="pil",
+                                tool="sketch",
+                                image_mode="RGBA",
+                                brush_color='#000000'
+                            )
 
-                        def get_current_image(image):
-                            # ToDo if possible make this a client side operation
-                            return gr.Image.update(image) if image else None
+                            def update_mask_brush_color(color):
+                                return gr.Image.update(brush_color=color)
 
-                        dummy_component = gr.Label(visible=False)
-                        create_canvas.click(
-                            fn=get_current_image,
-                            _js='getCurrentExtraSourceImg',
-                            inputs=[dummy_component],
-                            outputs=[input_mask],
-                            postprocess=False,
-                        )
+                            mask_brush_color.change(
+                                fn=update_mask_brush_color,
+                                inputs=[mask_brush_color],
+                                outputs=[input_mask]
+                            )
 
-            def update_opt_ui(_filter_type, _mask_shape, _override_settings, _enable_nudenet):
-                filter_opt_enable_list = filter_opt_ui_show_dict[_filter_type]
-                mask_shape_opt_show_list = mask_shape_opt_ui_show_dict[_mask_shape]
-                # blur_radius, blur_strength_curve, pixelation_factor, fill_color, mask_blend_radius, mask_blend_radius_variable_blur, rectangle_round_radius, nms_threshold
-                return (
-                    gr.Dropdown.update(visible=_override_settings),  # filter_type
-                    gr.Dropdown.update(visible=_override_settings),  # mask_shape
-                    gr.Slider.update(visible=_override_settings and filter_opt_enable_list[0]),  # blur_radius
-                    gr.Slider.update(visible=_override_settings and filter_opt_enable_list[1]),  # blur_strength_curve
-                    gr.Slider.update(visible=_override_settings and filter_opt_enable_list[2]),  # pixelation_factor
-                    gr.ColorPicker.update(visible=_override_settings and filter_opt_enable_list[3]),  # fill_color
-                    gr.Slider.update(visible=_override_settings and filter_opt_enable_list[4] and mask_shape_opt_show_list[0]),  # mask_blend_radius
-                    gr.Slider.update(visible=_override_settings and filter_opt_enable_list[5] and mask_shape_opt_show_list[0]),  # mask_blend_radius_variable_blur
-                    gr.Number().update(visible=_override_settings and mask_shape_opt_show_list[1]),  # rectangle_round_radius
-                    gr.Slider.update(visible=_override_settings and mask_shape_opt_show_list[2] and _enable_nudenet),  # nms_threshold
-                )
+                            def get_current_image(image):
+                                # ToDo if possible make this a client side operation
+                                return gr.Image.update(image) if image else None
 
-            for element in [override_settings, filter_type, mask_shape, enable_nudenet]:
-                element.change(update_opt_ui, inputs=[filter_type, mask_shape, override_settings, enable_nudenet], outputs=[filter_type, mask_shape, blur_radius, blur_strength_curve, pixelation_factor, fill_color, mask_blend_radius, mask_blend_radius_variable_blur, rectangle_round_radius, nms_threshold])
+                            dummy_component = gr.Label(visible=False)
+                            create_canvas.click(
+                                fn=get_current_image,
+                                _js='getCurrentExtraSourceImg',
+                                inputs=[dummy_component],
+                                outputs=[input_mask],
+                                postprocess=False,
+                            )
+
+                def update_opt_ui(_filter_type, _mask_shape, _override_settings, _enable_nudenet):
+                    filter_opt_enable_list = filter_opt_ui_show_dict[_filter_type]
+                    mask_shape_opt_show_list = mask_shape_opt_ui_show_dict[_mask_shape]
+                    # blur_radius, blur_strength_curve, pixelation_factor, fill_color, mask_blend_radius, mask_blend_radius_variable_blur, rectangle_round_radius, nms_threshold, row_1, row_2
+                    return (
+                        gr.Dropdown.update(visible=_override_settings),  # filter_type
+                        gr.Dropdown.update(visible=_override_settings),  # mask_shape
+                        gr.Slider.update(visible=_override_settings and filter_opt_enable_list[0]),  # blur_radius
+                        gr.Slider.update(visible=_override_settings and filter_opt_enable_list[1]),  # blur_strength_curve
+                        gr.Slider.update(visible=_override_settings and filter_opt_enable_list[2]),  # pixelation_factor
+                        gr.ColorPicker.update(visible=_override_settings and filter_opt_enable_list[3]),  # fill_color
+                        gr.Slider.update(visible=_override_settings and filter_opt_enable_list[4] and mask_shape_opt_show_list[0]),  # mask_blend_radius
+                        gr.Slider.update(visible=_override_settings and filter_opt_enable_list[5] and mask_shape_opt_show_list[0]),  # mask_blend_radius_variable_blur
+                        gr.Number().update(visible=_override_settings and mask_shape_opt_show_list[1]),  # rectangle_round_radius
+                        gr.Slider.update(visible=_override_settings and mask_shape_opt_show_list[2] and _enable_nudenet),  # nms_threshold
+                        gr.Row.update(visible=_override_settings),  # row_1
+                        gr.Row.update(visible=_override_settings and any(mask_shape_opt_show_list)),  # row_2
+                    )
+
+                update_opt_ui_inputs = [
+                    filter_type,
+                    mask_shape,
+                    override_settings,
+                    enable_nudenet,
+                ]
+                update_opt_ui_outputs = [
+                    filter_type, mask_shape,
+                    blur_radius, blur_strength_curve,
+                    pixelation_factor, fill_color,
+                    mask_blend_radius,
+                    mask_blend_radius_variable_blur,
+                    rectangle_round_radius,
+                    nms_threshold,
+                    row_1,
+                    row_2,
+                ]
+
+                for element in [override_settings, filter_type, mask_shape, enable_nudenet]:
+                    element.change(update_opt_ui, inputs=update_opt_ui_inputs, outputs=update_opt_ui_outputs, show_progress=False)
+                block.load(update_opt_ui, inputs=update_opt_ui_inputs, outputs=update_opt_ui_outputs, show_progress=False)
 
         controls = {
             'enable': enable,
