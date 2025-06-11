@@ -13,22 +13,26 @@ else:
     InputAccordion = None
 
 forge = False
-forge_no_error = False
+forge_gradio_4 = None
 extra_src_image = None
 
 try:
     if find_spec('modules_forge'):
         forge = True
-        from modules_forge.forge_canvas.canvas import ForgeCanvas
-        from modules.script_callbacks import on_after_component
+        try:
+            from modules_forge.forge_canvas.canvas import ForgeCanvas
+            from modules.script_callbacks import on_after_component
 
-        def get_extra_img_elem(component, **_kwargs):
-            global extra_src_image
-            if getattr(component, "elem_id", None) == "extras_image":
-                extra_src_image = component
+            def get_extra_img_elem(component, **_kwargs):
+                global extra_src_image
+                if getattr(component, "elem_id", None) == "extras_image":
+                    if isinstance(component, gr.Image):
+                        extra_src_image = component
 
-        on_after_component(get_extra_img_elem)
-        forge_no_error = True
+            on_after_component(get_extra_img_elem)
+            forge_gradio_4 = True
+        except ImportError:
+            forge = False
 except Exception as e:
     errors.report(
         '''Error loading sd-webui-nudenet-nsfw-censor extras tab on Forge
@@ -90,7 +94,7 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                     nms_threshold = gr.Slider(0, 1, 1, label='NMS threshold', visible=False)  # NMS threshold
                     rectangle_round_radius = gr.Number(value=0.5, label='Rectangle round radius', visible=False)  # Rounded rectangle
 
-                if not forge or forge_no_error:
+                if not forge or forge_gradio_4:
                     with gr.Row():
                         if not forge or extra_src_image:
                             create_canvas = gr.Button('Create canvas')
@@ -103,14 +107,14 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                             mask_brush_color = gr.ColorPicker('#000000', label='Brush color', info='visual only, use when brush color is hard to see')
                     with gr.Row():
                         if forge:
-                            if forge_no_error:
+                            if forge_gradio_4:
                                 forge_canvas = ForgeCanvas(
                                     elem_id="nsfw_censor_mask",
                                     height=512,
-                                    contrast_scribbles=shared.opts.img2img_inpaint_mask_high_contrast,
+                                    contrast_scribbles=getattr(shared.opts, 'img2img_inpaint_mask_high_contrast', None),
                                     scribble_color=shared.opts.img2img_inpaint_mask_brush_color,
                                     scribble_color_fixed=True,
-                                    scribble_alpha=shared.opts.img2img_inpaint_mask_scribble_alpha,
+                                    scribble_alpha=getattr(shared.opts, 'img2img_inpaint_mask_scribble_alpha', None),
                                     scribble_alpha_fixed=True,
                                     scribble_softness_fixed=True,
                                 )
@@ -218,7 +222,7 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
             'nms_threshold': nms_threshold,
         }
         if forge:
-            if forge_no_error:
+            if forge_gradio_4:
                 controls.update({
                     'draw_mask': draw_mask,
                     'upload_mask': upload_mask,
