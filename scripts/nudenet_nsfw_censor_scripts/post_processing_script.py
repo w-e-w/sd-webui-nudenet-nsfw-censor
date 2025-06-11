@@ -1,5 +1,5 @@
 from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector, mask_shapes_func_dict
-from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter, filter_dict
+from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter
 from modules import shared, images, scripts_postprocessing, errors
 from importlib.util import find_spec
 from PIL import Image, ImageFilter
@@ -46,7 +46,7 @@ filter_opt_ui_show_dict = {
     'Gaussian Blur': [True, False, False, False, True, False],
     'Pixelate': [False, False, True, False, True, False],
     'Fill color': [False, False, False, True, True, False],
-    'Detect only': [False, False, False, False, True, False],
+    'No censor': [False, False, False, False, True, False],
 }
 mask_shape_opt_ui_show_dict = {
     # [(mask_blend_radius, mask_blend_radius_variable_blur), rectangle_round_radius, nms_threshold]
@@ -75,8 +75,8 @@ class ScriptPostprocessingNudenetCensor(scripts_postprocessing.ScriptPostprocess
                     save_mask = gr.Checkbox(False, label='Save mask')
                     override_settings = gr.Checkbox(False, label='Override filter configs')
                 with gr.Row() as row_1:
-                    filter_type = gr.Dropdown(value='Variable blur', label='Censor filter', choices=list(filter_dict), visible=False)
                     mask_shape = gr.Dropdown(value='Ellipse', choices=list(mask_shapes_func_dict), label='Mask shape', visible=False)
+                    filter_type = gr.Dropdown(value='Variable blur', label='Censor filter', choices=list(filter_opt_ui_show_dict), visible=False)
                 with gr.Row() as row_2:
                     blur_radius = gr.Slider(0, 100, 10, label='Blur radius', visible=False)  # Variable blur Gaussian Blur
                     blur_strength_curve = gr.Slider(0, 6, 3, label='Blur strength curve', visible=False)  # Variable blur
