@@ -4,6 +4,7 @@ from cv2.dnn import NMSBoxes
 from modules import shared
 from pathlib import Path
 from math import sqrt
+from tqdm import tqdm
 import numpy as np
 
 nudenet_labels_dict = {
@@ -163,7 +164,7 @@ class PilNudeDetector:
             else:
                 image_mask = Image.new('1', img_size, 0)
                 draw = ImageDraw.Draw(image_mask)
-                verbose = ''
+                verbose = []
 
                 max_score_indices = np.argmax(outputs[:, 4:], axis=1)
                 detection_results = outputs[filter_results]
@@ -199,18 +200,17 @@ class PilNudeDetector:
                 boxes[:, 2:4] = boxes[:, 0:2] + wh_e
                 boxes = boxes.round()
 
+                nudenet_nsfw_censor_verbose_detection = shared.opts.nudenet_nsfw_censor_verbose_detection
                 for i in range(scores.shape[0]):
                     x1y1x2y2 = boxes[i]
                     wh = wh_e[i]
                     draw_func(draw, *x1y1x2y2, *wh, rectangle_round_radius)
 
-                    if shared.opts.nudenet_nsfw_censor_verbose_detection:
-                        verbose += (
-                            f'\n{nudenet_labels_friendly_name[class_index[i]]}: score {scores[i]}, x1 {x1y1x2y2[0]} y1 {x1y1x2y2[1]}, w {wh[0].round()} h {wh[1].round()}, x2 {x1y1x2y2[2]} y2 {x1y1x2y2[3]}'
-                        )
+                    if nudenet_nsfw_censor_verbose_detection:
+                        verbose.append(f'{nudenet_labels_friendly_name[class_index[i]]}: score {scores[i]}, x1 {x1y1x2y2[0]} y1 {x1y1x2y2[1]}, w {wh[0].round()} h {wh[1].round()}, x2 {x1y1x2y2[2]} y2 {x1y1x2y2[3]}')
 
                 if verbose:
-                    print(verbose)
+                    tqdm.write('\n' + '\n'.join(verbose))
 
                 return image_mask
 
